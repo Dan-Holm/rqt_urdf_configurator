@@ -1,0 +1,98 @@
+transforms:
+- header:
+    stamp:
+      sec: 1703092761
+      nanosec: 122115336
+    frame_id: base_link
+  child_frame_id: connection_link
+  transform:
+    translation:
+      x: -0.7866000000000001
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 1703092761
+      nanosec: 122115336
+    frame_id: connection_link
+  child_frame_id: hydraulic_link
+  transform:
+    translation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 1703092761
+      nanosec: 122115336
+    frame_id: base_link
+  child_frame_id: wheel_front_left_link
+  transform:
+    translation:
+      x: 0.0
+      y: 0.4815
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 1703092761
+      nanosec: 122115336
+    frame_id: base_link
+  child_frame_id: wheel_front_right_link
+  transform:
+    translation:
+      x: 0.0
+      y: -0.4815
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 1703092761
+      nanosec: 122115336
+    frame_id: rear_link
+  child_frame_id: wheel_rear_left_link
+  transform:
+    translation:
+      x: 0.0
+      y: 0.4815
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 1703092761
+      nanosec: 122115336
+    frame_id: rear_link
+  child_frame_id: wheel_rear_right_link
+  transform:
+    translation:
+      x: 0.0
+      y: -0.4815
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+---

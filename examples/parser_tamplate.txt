@@ -1,0 +1,778 @@
+gazebos: []
+joints:
+- axis:
+  - 1.0
+  - 0.0
+  - 0.0
+  calibration: None
+  child: connection_link
+  dynamics: None
+  limit:
+    effort: 1000.0
+    lower: -0.35
+    upper: 0.35
+    velocity: 0.5
+  mimic: None
+  name: connection_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - -0.7866000000000001
+    - 0.0
+    - 0.0
+  parent: base_link
+  safety_controller: None
+  type: revolute
+- axis:
+  - 0.0
+  - 0.0
+  - -1.0
+  calibration: None
+  child: hydraulic_link
+  dynamics: None
+  limit:
+    effort: 1000.0
+    lower: -0.8
+    upper: 0.8
+    velocity: 0.5
+  mimic: None
+  name: hydraulic_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - 0.0
+    - 0.0
+    - 0.0
+  parent: connection_link
+  safety_controller: None
+  type: revolute
+- axis:
+  - 1.0
+  - 1.0
+  - 0.0
+  calibration: None
+  child: rear_link
+  dynamics: None
+  limit: None
+  mimic: None
+  name: rear_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - -0.7866000000000001
+    - 0.0
+    - 0.0
+  parent: hydraulic_link
+  safety_controller: None
+  type: fixed
+- axis:
+  - 0.0
+  - 1.0
+  - 0.0
+  calibration: None
+  child: wheel_front_right_link
+  dynamics: None
+  limit: None
+  mimic: None
+  name: wheel_front_right_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - 0.0
+    - -0.4815
+    - 0.0
+  parent: base_link
+  safety_controller: None
+  type: continuous
+- axis:
+  - 0.0
+  - 1.0
+  - 0.0
+  calibration: None
+  child: wheel_front_left_link
+  dynamics: None
+  limit: None
+  mimic: None
+  name: wheel_front_left_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - 0.0
+    - 0.4815
+    - 0.0
+  parent: base_link
+  safety_controller: None
+  type: continuous
+- axis:
+  - 0.0
+  - 1.0
+  - 0.0
+  calibration: None
+  child: wheel_rear_right_link
+  dynamics: None
+  limit: None
+  mimic: None
+  name: wheel_rear_right_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - 0.0
+    - -0.4815
+    - 0.0
+  parent: rear_link
+  safety_controller: None
+  type: continuous
+- axis:
+  - 0.0
+  - 1.0
+  - 0.0
+  calibration: None
+  child: wheel_rear_left_link
+  dynamics: None
+  limit: None
+  mimic: None
+  name: wheel_rear_left_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - 0.0
+    - 0.4815
+    - 0.0
+  parent: rear_link
+  safety_controller: None
+  type: continuous
+- axis: None
+  calibration: None
+  child: rear_imu_link
+  dynamics: None
+  limit: None
+  mimic: None
+  name: rear_imu_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - -0.032
+    - 0.0
+    - 0.068
+  parent: rear_link
+  safety_controller: None
+  type: fixed
+- axis: None
+  calibration: None
+  child: base_scan_imu_link
+  dynamics: None
+  limit: None
+  mimic: None
+  name: base_scan_imu_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - 0.0
+    - 0.0
+    - 0.0
+  parent: base_scan
+  safety_controller: None
+  type: fixed
+- axis: None
+  calibration: None
+  child: base_scan
+  dynamics: None
+  limit: None
+  mimic: None
+  name: scan_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - 0.0
+    - 0.0
+    - 1.0
+  parent: base_link
+  safety_controller: None
+  type: fixed
+- axis: None
+  calibration: None
+  child: rtk_pole
+  dynamics: None
+  limit: None
+  mimic: None
+  name: rtk_joint
+  origin:
+    rpy:
+    - 0.0
+    - 0.0
+    - 0.0
+    xyz:
+    - -0.2
+    - 0.0
+    - 0.42200000000000004
+  parent: base_link
+  safety_controller: None
+  type: fixed
+links:
+- collisions:
+  - geometry:
+      size:
+      - 1.055
+      - 0.62
+      - 0.26
+    origin:
+      rpy:
+      - 0.0
+      - 0.0
+      - 0.0
+      xyz:
+      - -0.1873
+      - 0.0
+      - 0.0
+  inertial:
+    inertia:
+      ixx: 6.189
+      ixy: 0.0
+      ixz: -0.009
+      iyy: 17.997
+      iyz: 0.0
+      izz: 21.229
+    mass: 185.5
+    origin:
+      rpy:
+      - 0.0
+      - 1.5707963267948966
+      - 0.0
+      xyz:
+      - -0.142
+      - 0.0
+      - 0.0
+  name: base_link
+  origin: None
+  visuals:
+  - geometry:
+      filename: package://wagon_description/meshes/bases/Simplified_Front_Centered.stl
+      scale:
+      - 0.001
+      - 0.001
+      - 0.001
+    material:
+      color: None
+      name: white
+      texture: None
+    origin:
+      rpy:
+      - 0.0
+      - 0.0
+      - 1.57
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+- collisions: []
+  inertial: None
+  name: connection_link
+  origin: None
+  visuals: []
+- collisions: []
+  inertial: None
+  name: hydraulic_link
+  origin: None
+  visuals: []
+- collisions:
+  - geometry:
+      size:
+      - 1.02
+      - 0.62
+      - 0.26
+    origin:
+      rpy:
+      - 0.0
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.085
+      - 0.0
+      - 0.0
+  inertial:
+    inertia:
+      ixx: 6.189
+      ixy: 0.0
+      ixz: -0.009
+      iyy: 17.997
+      iyz: 0.0
+      izz: 21.229
+    mass: 190.5
+    origin:
+      rpy:
+      - 0.0
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.142
+      - 0.0
+      - 0.0
+  name: rear_link
+  origin: None
+  visuals:
+  - geometry:
+      filename: package://wagon_description/meshes/bases/Simplified_Back_Centered.stl
+      scale:
+      - 0.001
+      - 0.001
+      - 0.001
+    material:
+      color: None
+      name: white
+      texture: None
+    origin:
+      rpy:
+      - 0.0
+      - 0.0
+      - 1.5707963267948966
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+- collisions:
+  - geometry:
+      length: 0.215
+      radius: 0.292
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  inertial:
+    inertia:
+      ixx: 1.05
+      ixy: 1.0783e-10
+      ixz: -0.023
+      iyy: 1.83
+      iyz: -8.98e-12
+      izz: 1.05
+    mass: 40.5
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  name: wheel_front_right_link
+  origin: None
+  visuals:
+  - geometry:
+      filename: package://wagon_description/meshes/wheels/Wheel.stl
+      scale:
+      - 0.001
+      - 0.001
+      - 0.001
+    material:
+      color: None
+      name: black
+      texture: None
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+- collisions:
+  - geometry:
+      length: 0.215
+      radius: 0.294
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  inertial:
+    inertia:
+      ixx: 1.05
+      ixy: 1.0783e-10
+      ixz: -0.023
+      iyy: 1.83
+      iyz: -8.98e-12
+      izz: 1.05
+    mass: 40.5
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  name: wheel_front_left_link
+  origin: None
+  visuals:
+  - geometry:
+      filename: package://wagon_description/meshes/wheels/Wheel.stl
+      scale:
+      - 0.001
+      - 0.001
+      - 0.001
+    material:
+      color: None
+      name: black
+      texture: None
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+- collisions:
+  - geometry:
+      length: 0.215
+      radius: 0.294
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  inertial:
+    inertia:
+      ixx: 1.05
+      ixy: 1.0783e-10
+      ixz: -0.023
+      iyy: 1.83
+      iyz: -8.98e-12
+      izz: 1.05
+    mass: 40.5
+    origin:
+      rpy:
+      - 0.0
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  name: wheel_rear_right_link
+  origin: None
+  visuals:
+  - geometry:
+      filename: package://wagon_description/meshes/wheels/Wheel.stl
+      scale:
+      - 0.001
+      - 0.001
+      - 0.001
+    material:
+      color: None
+      name: black
+      texture: None
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+- collisions:
+  - geometry:
+      length: 0.215
+      radius: 0.294
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  inertial:
+    inertia:
+      ixx: 1.05
+      ixy: 1.0783e-10
+      ixz: -0.023
+      iyy: 1.83
+      iyz: -8.98e-12
+      izz: 1.05
+    mass: 40.5
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  name: wheel_rear_left_link
+  origin: None
+  visuals:
+  - geometry:
+      filename: package://wagon_description/meshes/wheels/Wheel.stl
+      scale:
+      - 0.001
+      - 0.001
+      - 0.001
+    material:
+      color: None
+      name: black
+      texture: None
+    origin:
+      rpy:
+      - 1.57
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+- collisions: []
+  inertial: None
+  name: rear_imu_link
+  origin: None
+  visuals: []
+- collisions: []
+  inertial: None
+  name: base_scan_imu_link
+  origin: None
+  visuals: []
+- collisions:
+  - geometry:
+      length: 0.072
+      radius: 0.079
+    origin:
+      rpy:
+      - 0.0
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  inertial:
+    inertia:
+      ixx: 0.001
+      ixy: 0.0
+      ixz: 0.0
+      iyy: 0.001
+      iyz: 0.0
+      izz: 0.001
+    mass: 0.314
+    origin:
+      rpy:
+      - 0
+      - 0
+      - 0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  name: base_scan
+  origin: None
+  visuals:
+  - geometry:
+      filename: package://wagon_description/meshes/sensors/ouster_OS1.dae
+      scale:
+      - 1.0
+      - 1.0
+      - 1.0
+    material:
+      color: None
+      name: dark
+      texture: None
+    origin:
+      rpy:
+      - 1.5707963267948966
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - -0.036
+- collisions:
+  - geometry:
+      length: 0.28
+      radius: 0.01
+    origin:
+      rpy:
+      - 0.0
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - -0.14
+  inertial:
+    inertia:
+      ixx: 0.001
+      ixy: 0.0
+      ixz: 0.0
+      iyy: 0.001
+      iyz: 0.0
+      izz: 0.001
+    mass: 0.314
+    origin:
+      rpy:
+      - 0
+      - 0
+      - 0
+      xyz:
+      - 0.0
+      - 0.0
+      - 0.0
+  name: rtk_pole
+  origin: None
+  visuals:
+  - geometry:
+      length: 0.28
+      radius: 0.01
+    material:
+      color: None
+      name: dark
+      texture: None
+    origin:
+      rpy:
+      - 0.0
+      - 0.0
+      - 0.0
+      xyz:
+      - 0.0
+      - 0.0
+      - -0.14
+materials:
+- color:
+    rgba:
+    - 0.0
+    - 0.0
+    - 0.0
+    - 1.0
+  name: black
+  texture: None
+- color:
+    rgba:
+    - 0.3
+    - 0.3
+    - 0.3
+    - 1.0
+  name: dark
+  texture: None
+- color:
+    rgba:
+    - 0.4
+    - 0.4
+    - 0.4
+    - 1.0
+  name: light_black
+  texture: None
+- color:
+    rgba:
+    - 0.0
+    - 0.0
+    - 0.8
+    - 1.0
+  name: blue
+  texture: None
+- color:
+    rgba:
+    - 0.0
+    - 0.8
+    - 0.0
+    - 1.0
+  name: green
+  texture: None
+- color:
+    rgba:
+    - 0.5
+    - 0.5
+    - 0.5
+    - 1.0
+  name: grey
+  texture: None
+- color:
+    rgba:
+    - 1.0
+    - 0.4235294117647059
+    - 0.0392156862745098
+    - 1.0
+  name: orange
+  texture: None
+- color:
+    rgba:
+    - 0.8705882352941177
+    - 0.8117647058823529
+    - 0.7647058823529411
+    - 1.0
+  name: brown
+  texture: None
+- color:
+    rgba:
+    - 0.8
+    - 0.0
+    - 0.0
+    - 1.0
+  name: red
+  texture: None
+- color:
+    rgba:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+  name: white
+  texture: None
+- color:
+    rgba:
+    - 0.9
+    - 0.9
+    - 1.0
+    - 0.6
+  name: acrylic
+  texture: None
+name: wagon
+transmissions: []
+version: '1.0'
