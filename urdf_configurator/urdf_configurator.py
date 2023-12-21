@@ -24,11 +24,35 @@ class UrdfConfigurator(rclpy.node.Node):
                 'Waiting for robot_description to be published on the robot_description topic...')
 
 
-        print(self.urdf.parent_map)
         self.static_tf_broadcaster = tf2_ros.StaticTransformBroadcaster(self)
         # self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
-        self.publishURDF(self.urdf.joints)
+        self.publishURDF()
+        self.publish_static_transforms(self.urdf.child_map)
+
+
+        joint = urdf.Joint(name='test_joint', joint_type='fixed', parent='base_link', child='test_link')
+        joint.origin = urdf.Pose(xyz=[1.0, 1.0, 0.0], rpy=[0.0, 0.0, 0.0])
+        self.urdf.add_joint(joint)
+        link = urdf.Link(name='test_link',
+                         visual=urdf.Visual(geometry=urdf.Cylinder(length=1, radius=1),
+                                              material=urdf.Material(name='mat')))
+        # print(self.urdf.links[-1])
+        robot = urdf.Robot(name='test', version='1.0')
+        link.inertial = urdf.Inertial(mass=1, inertia=urdf.Inertia(ixx=1, ixy=0, ixz=0, iyy=1, iyz=0, izz=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
+        visual = urdf.Visual(geometry=urdf.Cylinder(length=1, radius=1), material=urdf.Material(color=urdf.Color(0.3, 0.3, 0.3, 1.0), name='dark'), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
+        collision = urdf.Collision(geometry=urdf.Cylinder(length=1, radius=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
+        print(visual)
+        link.visual = visual
+        link.collision = collision
+        print(link)
+        self.urdf.add_link(link)
+        # robot.add_aggregate('visual', visual)
+        # robot.add_aggregate('collision', collision)
+        # print(self.urdf.links[-1])
+        # robot.add_aggregates_to_xml()
+        # print(self.urdf.links[-1])
+        self.publishURDF()
         self.publish_static_transforms(self.urdf.child_map)
         # self.publish_transforms(self.joints)
         # print(self.urdf.to_xml_string())
@@ -38,7 +62,7 @@ class UrdfConfigurator(rclpy.node.Node):
         self.joints = description.joints
         self.robot_name = description.name
 
-    def publishURDF(self, urdf):
+    def publishURDF(self):
         # create transient local publisher, for latched topic
         latching_qos = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
         self.urdf_publisher = self.create_publisher(String, 'robot_description_debug',  qos_profile=latching_qos) 
@@ -47,9 +71,6 @@ class UrdfConfigurator(rclpy.node.Node):
         String_msg.data = new_urdf_string
         # self.get_logger().info('Publishing new URDF:\n%s' % new_urdf_string)
         self.urdf_publisher.publish(String_msg)
-
-
-        pass
         
 
     def origin_to_transofrm(self, origin):
@@ -96,7 +117,6 @@ class UrdfConfigurator(rclpy.node.Node):
                 child_index = [index for (index, item) in enumerate(self.urdf.joints) if item.name == child[0]]
                 tf_transform = TransformStamped()
                 if child_index:
-                    print(self.joints[child_index[0]].origin)
                     tf_transform = self.origin_to_transofrm(self.joints[child_index[0]].origin)
                 tf_transform.header.frame_id = frame_prefix + parent
                 tf_transform.child_frame_id = frame_prefix + child[1]
