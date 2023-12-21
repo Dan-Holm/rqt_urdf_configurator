@@ -25,14 +25,12 @@ class UrdfConfigurator(rclpy.node.Node):
 
 
         print(self.urdf.parent_map)
-        print(self.urdf.child_map)
-        exit()  
         self.static_tf_broadcaster = tf2_ros.StaticTransformBroadcaster(self)
-        self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
+        # self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
         self.publishURDF(self.urdf.joints)
-        self.publish_static_transforms(self.urdf.links)
-        self.publish_transforms(self.joints)
+        self.publish_static_transforms(self.urdf.child_map)
+        # self.publish_transforms(self.joints)
         # print(self.urdf.to_xml_string())
 
     def configure_robot(self, description):
@@ -55,6 +53,10 @@ class UrdfConfigurator(rclpy.node.Node):
         
 
     def origin_to_transofrm(self, origin):
+
+        if origin is None:
+            return TransformStamped()
+        
         translation = origin.xyz
         rotation = origin.rpy
         
@@ -62,10 +64,10 @@ class UrdfConfigurator(rclpy.node.Node):
         transform.transform.translation.x = translation[0]
         transform.transform.translation.y = translation[1]
         transform.transform.translation.z = translation[2]
-        transform.transform.rotation.x = rotation[0]
-        transform.transform.rotation.y = rotation[1]
-        transform.transform.rotation.z = rotation[2]
-        transform.transform.rotation.w = 0.0
+        transform.transform.rotation.x = 0.0
+        transform.transform.rotation.y = 0.0
+        transform.transform.rotation.z = 0.0
+        transform.transform.rotation.w = 1.0
 
         return transform
 
@@ -83,17 +85,23 @@ class UrdfConfigurator(rclpy.node.Node):
 
         self.tf_broadcaster.sendTransform(tf_transforms)
 
-    def publish_static_transforms(self, links):
+    def publish_static_transforms(self, child_map):
         frame_prefix = ''
 
         tf_transforms = []
 
-        for link in links:
-            if len(link.visuals) == 0:
-                continue
-            tf_transform = self.origin_to_transofrm(link.visuals[0].origin)
-            tf_transform.header.frame_id = frame_prefix + link.name
-            tf_transforms.append(tf_transform)
+        for parent in child_map.keys():
+            for child in child_map[parent]:
+
+                child_index = [index for (index, item) in enumerate(self.urdf.joints) if item.name == child[0]]
+                tf_transform = TransformStamped()
+                if child_index:
+                    print(self.joints[child_index[0]].origin)
+                    tf_transform = self.origin_to_transofrm(self.joints[child_index[0]].origin)
+                tf_transform.header.frame_id = frame_prefix + parent
+                tf_transform.child_frame_id = frame_prefix + child[1]
+                tf_transform.transform.rotation.w = 1.0
+                tf_transforms.append(tf_transform)
 
         self.static_tf_broadcaster.sendTransform(tf_transforms)
 
