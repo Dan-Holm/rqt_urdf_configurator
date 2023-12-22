@@ -39,19 +39,7 @@ class UrdfConfigurator(rclpy.node.Node):
                                               material=urdf.Material(name='mat')))
         # print(self.urdf.links[-1])
         robot = urdf.Robot(name='test', version='1.0')
-        link.inertial = urdf.Inertial(mass=1, inertia=urdf.Inertia(ixx=1, ixy=0, ixz=0, iyy=1, iyz=0, izz=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
-        visual = urdf.Visual(geometry=urdf.Cylinder(length=1, radius=1), material=urdf.Material(color=urdf.Color(0.3, 0.3, 0.3, 1.0), name='dark'), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
-        collision = urdf.Collision(geometry=urdf.Cylinder(length=1, radius=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
-        print(visual)
-        link.visual = visual
-        link.collision = collision
-        print(link)
-        self.urdf.add_link(link)
-        # robot.add_aggregate('visual', visual)
-        # robot.add_aggregate('collision', collision)
-        # print(self.urdf.links[-1])
-        # robot.add_aggregates_to_xml()
-        # print(self.urdf.links[-1])
+
         self.publishURDF()
         self.publish_static_transforms(self.urdf.child_map)
         # self.publish_transforms(self.joints)
@@ -71,7 +59,42 @@ class UrdfConfigurator(rclpy.node.Node):
         String_msg.data = new_urdf_string
         # self.get_logger().info('Publishing new URDF:\n%s' % new_urdf_string)
         self.urdf_publisher.publish(String_msg)
-        
+
+
+    def add_assembly(self, link_name, joint_name, parent_name, child_name, joint_type, joint_origin_xyz, joint_origin_rpy):
+
+        # create new joint
+        joint = urdf.Joint(name='test_joint', joint_type='fixed', parent='base_link', child='test_link')
+        joint.origin = urdf.Pose(xyz=[1.0, 1.0, 0.0], rpy=[0.0, 0.0, 0.0])
+        self.urdf.add_joint(joint)
+        link = urdf.Link(name='test_link',)
+        # print(self.urdf.links[-1])
+        link.inertial = urdf.Inertial(mass=1, inertia=urdf.Inertia(ixx=1, ixy=0, ixz=0, iyy=1, iyz=0, izz=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
+        visual = urdf.Visual(geometry=urdf.Cylinder(length=1, radius=1), material=urdf.Material(color=urdf.Color(0.3, 0.3, 0.3, 1.0), name='dark'), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
+        collision = urdf.Collision(geometry=urdf.Cylinder(length=1, radius=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
+        link.visual = visual
+        link.collision = collision
+        self.urdf.add_link(link)
+
+    def add_visual(self, link, geometry, material, name):
+        visual = urdf.Visual(geometry=geometry, material=material, name=name)
+        link.visual = visual
+
+    def add_collision(self, link, geometry, pose):
+        collision = urdf.Collision(geometry=geometry, origin=pose)
+        link.collision = collision
+
+    def add_inertial(self, link, mass, inertia, pose):
+        inertial = urdf.Inertial(mass=mass, inertia=inertia, origin=pose)
+        link.inertial = inertial
+
+    def add_joint_pose(self, joint, pose):
+        joint.origin = pose
+
+    
+    def update_robot(self):
+        self.publishURDF()
+        self.publish_static_transforms(self.urdf.child_map)
 
     def origin_to_transofrm(self, origin):
 
@@ -140,7 +163,8 @@ def main():
     # Parse the remaining arguments, noting that the passed-in args must *not*
     # contain the name of the program.
     parsed_args = parser.parse_args(args=stripped_args[1:])
-    uc = UrdfConfigurator('/home/daniel/master_ws/src/Danitech-master/wagon_description/urdf/wagon.urdf')
+    # uc = UrdfConfigurator('/home/daniel/master_ws/src/Danitech-master/wagon_description/urdf/wagon.urdf')
+    uc = UrdfConfigurator('/home/daniel/playground/turlebot4/src/turtlebot4/turtlebot4_description/urdf/standard/turtlebot4.urdf')
 
     try:
         rclpy.spin(uc)
