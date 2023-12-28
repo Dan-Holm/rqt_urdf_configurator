@@ -31,17 +31,17 @@ class UrdfConfigurator(rclpy.node.Node):
         self.publish_static_transforms(self.urdf.child_map)
 
 
-        joint = urdf.Joint(name='test_joint', joint_type='fixed', parent='base_link', child='test_link')
-        joint.origin = urdf.Pose(xyz=[1.0, 1.0, 0.0], rpy=[0.0, 0.0, 0.0])
-        self.urdf.add_joint(joint)
-        link = urdf.Link(name='test_link',
-                         visual=urdf.Visual(geometry=urdf.Cylinder(length=1, radius=1),
-                                              material=urdf.Material(name='mat')))
-        # print(self.urdf.links[-1])
-        robot = urdf.Robot(name='test', version='1.0')
+        # joint = urdf.Joint(name='test_joint', joint_type='fixed', parent='base_link', child='test_link')
+        # joint.origin = urdf.Pose(xyz=[1.0, 1.0, 0.0], rpy=[0.0, 0.0, 0.0])
+        # self.urdf.add_joint(joint)
+        # link = urdf.Link(name='test_link',
+        #                  visual=urdf.Visual(geometry=urdf.Cylinder(length=1, radius=1),
+        #                                       material=urdf.Material(name='mat')))
+        # # print(self.urdf.links[-1])
+        # robot = urdf.Robot(name='test', version='1.0')
 
-        self.publishURDF()
-        self.publish_static_transforms(self.urdf.child_map)
+        # self.publishURDF()
+        # self.publish_static_transforms(self.urdf.child_map)
         # self.publish_transforms(self.joints)
         # print(self.urdf.to_xml_string())
 
@@ -60,6 +60,9 @@ class UrdfConfigurator(rclpy.node.Node):
         # self.get_logger().info('Publishing new URDF:\n%s' % new_urdf_string)
         self.urdf_publisher.publish(String_msg)
 
+
+    def get_link_names(self):
+        return [link.name for link in self.links]
 
     def add_assembly(self, link_name, joint_name, parent_name, child_name, joint_type, joint_origin_xyz, joint_origin_rpy):
 

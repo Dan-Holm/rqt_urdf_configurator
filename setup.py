@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'urdf_configurator = urdf_configurator.urdf_configurator:main'
+            'urdf_configurator = urdf_configurator.urdf_configurator:main',
+            'urdf_configurator_gui = urdf_configurator.urdf_configurator_gui:main'
         ],
     },
 )
