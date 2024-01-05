@@ -10,6 +10,47 @@ from rclpy.qos import QoSProfile, QoSDurabilityPolicy
 from geometry_msgs.msg import TransformStamped
 import tf2_ros
 # import euler to quaternion conversion
+
+
+
+
+
+class assemblySetup():
+    def __init__(self):
+        pass
+
+    def configure_assembly(self, link_name, joint_name, parent_name, child_name, joint_type, joint_origin_xyz, joint_origin_rpy):
+
+            # create new joint
+            self.joint = urdf.Joint(name=joint_name, joint_type=joint_type, parent=parent_name, child=child_name)
+            self.joint.origin = urdf.Pose(xyz=joint_origin_xyz, rpy=joint_origin_rpy)
+            self.link = urdf.Link(name=link_name,)
+            # print(self.urdf.links[-1])
+            self.link.inertial = urdf.Inertial(mass=1, inertia=urdf.Inertia(ixx=1, ixy=0, ixz=0, iyy=1, iyz=0, izz=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
+            visual = urdf.Visual(geometry=urdf.Cylinder(length=1, radius=1), material=urdf.Material(color=urdf.Color(0.3, 0.3, 0.3, 1.0), name='dark'), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
+            collision = urdf.Collision(geometry=urdf.Cylinder(length=1, radius=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
+            self.link.visual = visual
+            self.link.collision = collision
+
+    def get_link(self):
+        return self.link
+    def get_joint(self):
+        return self.joint
+
+    def add_visual(self, link, geometry, material, name):
+        visual = urdf.Visual(geometry=geometry, material=material, name=name)
+        link.visual = visual
+
+    def add_collision(self, link, geometry, pose):
+        collision = urdf.Collision(geometry=geometry, origin=pose)
+        link.collision = collision
+
+    def add_inertial(self, link, mass, inertia, pose):
+        inertial = urdf.Inertial(mass=mass, inertia=inertia, origin=pose)
+        link.inertial = inertial
+
+    def add_joint_pose(self, joint, pose):
+        joint.origin = pose
 class UrdfConfigurator(rclpy.node.Node):
 
     def __init__(self, description_file):
@@ -60,39 +101,12 @@ class UrdfConfigurator(rclpy.node.Node):
         # self.get_logger().info('Publishing new URDF:\n%s' % new_urdf_string)
         self.urdf_publisher.publish(String_msg)
 
+    def add_link(self, link):
+        self.urdf.add_link(link)
+
 
     def get_link_names(self):
         return [link.name for link in self.links]
-
-    def add_assembly(self, link_name, joint_name, parent_name, child_name, joint_type, joint_origin_xyz, joint_origin_rpy):
-
-        # create new joint
-        joint = urdf.Joint(name='test_joint', joint_type='fixed', parent='base_link', child='test_link')
-        joint.origin = urdf.Pose(xyz=[1.0, 1.0, 0.0], rpy=[0.0, 0.0, 0.0])
-        self.urdf.add_joint(joint)
-        link = urdf.Link(name='test_link',)
-        # print(self.urdf.links[-1])
-        link.inertial = urdf.Inertial(mass=1, inertia=urdf.Inertia(ixx=1, ixy=0, ixz=0, iyy=1, iyz=0, izz=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
-        visual = urdf.Visual(geometry=urdf.Cylinder(length=1, radius=1), material=urdf.Material(color=urdf.Color(0.3, 0.3, 0.3, 1.0), name='dark'), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
-        collision = urdf.Collision(geometry=urdf.Cylinder(length=1, radius=1), origin=urdf.Pose(xyz=[0, 0, 0], rpy=[0, 0, 0]))
-        link.visual = visual
-        link.collision = collision
-        self.urdf.add_link(link)
-
-    def add_visual(self, link, geometry, material, name):
-        visual = urdf.Visual(geometry=geometry, material=material, name=name)
-        link.visual = visual
-
-    def add_collision(self, link, geometry, pose):
-        collision = urdf.Collision(geometry=geometry, origin=pose)
-        link.collision = collision
-
-    def add_inertial(self, link, mass, inertia, pose):
-        inertial = urdf.Inertial(mass=mass, inertia=inertia, origin=pose)
-        link.inertial = inertial
-
-    def add_joint_pose(self, joint, pose):
-        joint.origin = pose
 
     
     def update_robot(self):

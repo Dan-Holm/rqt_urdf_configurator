@@ -53,14 +53,14 @@ from python_qt_binding.QtWidgets import QPushButton
 from python_qt_binding.QtWidgets import QSlider
 from python_qt_binding.QtWidgets import QScrollArea
 from python_qt_binding.QtWidgets import QVBoxLayout
-from python_qt_binding.QtWidgets import QWidget
+from python_qt_binding.QtWidgets import QWidget, QFileDialog
 from python_qt_binding.QtGui import QPainter
 from python_qt_binding.QtCore import QRect
 from python_qt_binding.QtCore import pyqtSignal
-from python_qt_binding.QtGui import QFontMetrics
+from python_qt_binding.QtGui import QFontMetrics, QPixmap
 
 
-from urdf_configurator.urdf_configurator import UrdfConfigurator
+from urdf_configurator.urdf_configurator import UrdfConfigurator, assemblySetup
 
 RANGE = 10000
 LINE_EDIT_WIDTH = 45
@@ -127,10 +127,10 @@ class MyPopup(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.title = 'Add assembly'
-        self.left = 10
+        self.left = 100
         self.top = 10
-        self.width = 400
-        self.height = 140
+        self.width = 70
+        self.height = 540
         self.inputs = []
     
     def initPopup(self):
@@ -139,7 +139,7 @@ class MyPopup(QWidget):
     
         # Create a button in the window
         self.button = QPushButton('Add assembly', self)
-        self.button.move(20,80)
+        self.button.move(20, self.height - 40)
 
         # connect button to function on_click
         self.button.clicked.connect(self.on_click)
@@ -152,7 +152,7 @@ class MyPopup(QWidget):
         textbox.setObjectName(input)
 
         if self.inputs:
-            textbox.move(self.inputs[-1].geometry().right() + 20, 20)
+            textbox.move(20, self.inputs[-1].geometry().bottom() + 30)
         else:
             textbox.move(20, 20)
 
@@ -174,7 +174,7 @@ class MyPopup(QWidget):
         dropdown.addItems(options)
 
         if self.inputs:
-            dropdown.move(self.inputs[-1].geometry().right() + 20, 20)
+            dropdown.move(20, self.inputs[-1].geometry().bottom() + 30)
         else:
             dropdown.move(20, 20)
 
@@ -187,16 +187,41 @@ class MyPopup(QWidget):
             width = QFontMetrics(QFont("Helvetica", 9, QFont.Bold)).width(option)
             if width > max_width:
                 max_width = width
-
         dropdown.resize(max_width+40,30)
+
+        # save max size for a proper sized GUI
+        if self.width < max_width + 20:
+            self.width = max_width + 20
 
         title.show()
         dropdown.show()
         
         self.inputs.append(dropdown)
 
+    def fileBrowserButton(self, name):
+        browserButton = QPushButton(name, self)
+        self.fileTextbox = QLineEdit(self)
+
+        if self.inputs:
+            browserButton.move(20, self.inputs[-1].geometry().bottom() + 30)
+        else:
+            browserButton.move(20, 20)
+        browserButton.clicked.connect(self.getfile)
+
+        browserButton.show()
+
+
+
+		
+
+    def getfile(self):
+        self.fname = QFileDialog.getOpenFileName(self, 'Open file', 
+         'c:\\',"Image files (*.jpg *.gif)")
+        self.fileTextbox.inputMask(self.fname)
+
+        
+
     def resizeWidget(self):
-        self.width = self.inputs[-1].geometry().right() + 20
         self.setGeometry(self.left, self.top, self.width, self.height)
 
     def on_click(self):
@@ -250,7 +275,7 @@ class urdfConfiguratorGUI(QMainWindow):
 
     def receive_assembly_inputs(self, inputs):
 
-        inputmap = {'ln': '', 'jn': '', 'pl': '', 'cl': '', 'jt': '', 'xyz': '', 'rpy': ''}
+        inputmap = {'ln': '', 'jn': '', 'pl': '', 'cl': '', 'jt': '', 'xyz': '', 'rpy': '', 'visual file': ''}
         for input in inputs:
             if isinstance(input, QLineEdit):
                 inputmap[input.objectName()] = input.text()
@@ -258,8 +283,9 @@ class urdfConfiguratorGUI(QMainWindow):
             elif isinstance(input, QComboBox):
                 inputmap[input.objectName()] = input.currentText()
                 print(input.objectName(), input.currentText())
-
-        self.configurator.add_assembly(inputmap['ln'], inputmap['jn'], inputmap['pl'], inputmap['cl'], inputmap['jt'], inputmap['xyz'], inputmap['rpy'])
+        self.new_assembly.configure_assembly(inputmap['ln'], inputmap['jn'], inputmap['pl'], inputmap['cl'], inputmap['jt'], inputmap['xyz'], inputmap['rpy'])
+        
+        self.configurator.add_link(self.new_assembly.get_link())
         self.configurator.update_robot()
 
     @pyqtSlot()
@@ -278,7 +304,11 @@ class urdfConfiguratorGUI(QMainWindow):
         self.w.add_dropdown("Joint type", "jt", ["fixed", "revolute", "continuous", "prismatic", "floating", "planar"])
         self.w.add_input("Joint origin", "xyz")
         self.w.add_input("Joint origin", "rpy")
+        self.w.fileBrowserButton("Visuals file")
+
         self.w.resizeWidget()
+
+        self.new_assembly = assemblySetup()
 
         self.w.return_inputs_signal.connect(self.receive_assembly_inputs)
 
