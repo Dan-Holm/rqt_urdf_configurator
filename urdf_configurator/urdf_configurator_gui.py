@@ -71,6 +71,7 @@ INIT_NUM_SLIDERS = 7  # Initial number of sliders to show in window
 DEFAULT_WINDOW_MARGIN = 11
 DEFAULT_CHILD_MARGIN = 9
 DEFAULT_BTN_HEIGHT = 25
+DEFAULT_SEPERATION_MARGIN = 20
 DEFAULT_SLIDER_HEIGHT = 64  # Is the combination of default heights in Slider
 
 # Calculate default minimums for window sizing
@@ -139,7 +140,7 @@ class MyPopup(QWidget):
     
         # Create a button in the window
         self.button = QPushButton('Add assembly', self)
-        self.button.move(20, self.height - 40)
+        self.button.move(DEFAULT_SEPERATION_MARGIN, self.height - 40)
 
         # connect button to function on_click
         self.button.clicked.connect(self.on_click)
@@ -152,11 +153,11 @@ class MyPopup(QWidget):
         textbox.setObjectName(input)
 
         if self.inputs:
-            textbox.move(20, self.inputs[-1].geometry().bottom() + 30)
+            textbox.move(DEFAULT_SEPERATION_MARGIN, self.inputs[-1].geometry().bottom() + 30)
         else:
-            textbox.move(20, 20)
+            textbox.move(DEFAULT_SEPERATION_MARGIN, DEFAULT_SEPERATION_MARGIN)
 
-        title.move(textbox.geometry().left(), textbox.geometry().top() - 20)
+        title.move(textbox.geometry().left(), textbox.geometry().top() - DEFAULT_SEPERATION_MARGIN)
         title.font = QFont("Helvetica", 9, QFont.Bold)
 
         textbox.resize(100,30)
@@ -174,11 +175,11 @@ class MyPopup(QWidget):
         dropdown.addItems(options)
 
         if self.inputs:
-            dropdown.move(20, self.inputs[-1].geometry().bottom() + 30)
+            dropdown.move(DEFAULT_SEPERATION_MARGIN, self.inputs[-1].geometry().bottom() + 30)
         else:
-            dropdown.move(20, 20)
+            dropdown.move(DEFAULT_SEPERATION_MARGIN, DEFAULT_SEPERATION_MARGIN)
 
-        title.move(dropdown.geometry().left(), dropdown.geometry().top() - 20)
+        title.move(dropdown.geometry().left(), dropdown.geometry().top() - DEFAULT_SEPERATION_MARGIN)
         title.font = QFont("Helvetica", 9, QFont.Bold)
 
         # Set size of dropdown to the maximum size of the options
@@ -190,8 +191,8 @@ class MyPopup(QWidget):
         dropdown.resize(max_width+40,30)
 
         # save max size for a proper sized GUI
-        if self.width < max_width + 20:
-            self.width = max_width + 20
+        if self.width < max_width + DEFAULT_SEPERATION_MARGIN:
+            self.width = max_width + DEFAULT_SEPERATION_MARGIN
 
         title.show()
         dropdown.show()
@@ -203,12 +204,15 @@ class MyPopup(QWidget):
         self.fileTextbox = QLineEdit(self)
 
         if self.inputs:
-            browserButton.move(20, self.inputs[-1].geometry().bottom() + 30)
+            browserButton.move(DEFAULT_SEPERATION_MARGIN, self.inputs[-1].geometry().bottom() + 30)
+            self.fileTextbox.move(browserButton.geometry().right() + DEFAULT_SEPERATION_MARGIN, browserButton.geometry().top())
         else:
-            browserButton.move(20, 20)
+            browserButton.move(DEFAULT_SEPERATION_MARGIN, DEFAULT_SEPERATION_MARGIN)
+            self.fileTextbox.move(browserButton.geometry().right() + DEFAULT_SEPERATION_MARGIN, browserButton.geometry().top())
         browserButton.clicked.connect(self.getfile)
 
         browserButton.show()
+        self.fileTextbox.show()
 
 
 
@@ -216,8 +220,13 @@ class MyPopup(QWidget):
 
     def getfile(self):
         self.fname = QFileDialog.getOpenFileName(self, 'Open file', 
-         'c:\\',"Image files (*.jpg *.gif)")
-        self.fileTextbox.inputMask(self.fname)
+         '/home/daniel/master_ws/src/Danitech-master/wagon_description/meshes/bases/',"3D mesh files (*.shp *.dxf *.dae, *.stl)")
+        # show fname in fileTextbox
+        print("mesh filename", self.fname[0])
+        self.fileTextbox.setInputMask(self.fname[0])
+        self.inputs.append(self.fname)
+
+
 
         
 
@@ -275,7 +284,7 @@ class urdfConfiguratorGUI(QMainWindow):
 
     def receive_assembly_inputs(self, inputs):
 
-        inputmap = {'ln': '', 'jn': '', 'pl': '', 'cl': '', 'jt': '', 'xyz': '', 'rpy': '', 'visual file': ''}
+        inputmap = {'ln': '', 'jn': '', 'pl': '', 'cl': '', 'jt': '', 'xyz': '', 'rpy': '', 'mesh_file': ''}
         for input in inputs:
             if isinstance(input, QLineEdit):
                 inputmap[input.objectName()] = input.text()
@@ -283,6 +292,9 @@ class urdfConfiguratorGUI(QMainWindow):
             elif isinstance(input, QComboBox):
                 inputmap[input.objectName()] = input.currentText()
                 print(input.objectName(), input.currentText())
+            elif isinstance(input, tuple):
+                inputmap["mesh_file"] = input[0]
+                print(input[0])
         self.new_assembly.configure_assembly(inputmap['ln'], inputmap['jn'], inputmap['pl'], inputmap['cl'], inputmap['jt'], inputmap['xyz'], inputmap['rpy'])
         
         self.configurator.add_link(self.new_assembly.get_link())
@@ -304,7 +316,7 @@ class urdfConfiguratorGUI(QMainWindow):
         self.w.add_dropdown("Joint type", "jt", ["fixed", "revolute", "continuous", "prismatic", "floating", "planar"])
         self.w.add_input("Joint origin", "xyz")
         self.w.add_input("Joint origin", "rpy")
-        self.w.fileBrowserButton("Visuals file")
+        self.w.fileBrowserButton("mesh file")
 
         self.w.resizeWidget()
 
