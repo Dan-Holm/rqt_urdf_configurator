@@ -72,19 +72,7 @@ class UrdfConfigurator(rclpy.node.Node):
         self.publish_static_transforms(self.urdf.child_map)
 
 
-        # joint = urdf.Joint(name='test_joint', joint_type='fixed', parent='base_link', child='test_link')
-        # joint.origin = urdf.Pose(xyz=[1.0, 1.0, 0.0], rpy=[0.0, 0.0, 0.0])
-        # self.urdf.add_joint(joint)
-        # link = urdf.Link(name='test_link',
-        #                  visual=urdf.Visual(geometry=urdf.Cylinder(length=1, radius=1),
-        #                                       material=urdf.Material(name='mat')))
-        # # print(self.urdf.links[-1])
-        # robot = urdf.Robot(name='test', version='1.0')
 
-        # self.publishURDF()
-        # self.publish_static_transforms(self.urdf.child_map)
-        # self.publish_transforms(self.joints)
-        # print(self.urdf.to_xml_string())
 
     def configure_robot(self, description):
         self.links = description.links
@@ -108,6 +96,8 @@ class UrdfConfigurator(rclpy.node.Node):
     def get_link_names(self):
         return [link.name for link in self.links]
 
+    def get_robot(self):
+        return self.urdf
     
     def update_robot(self):
         self.publishURDF()

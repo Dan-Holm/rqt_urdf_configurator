@@ -34,10 +34,17 @@ import argparse
 import random
 import signal
 import sys
+import os
+from ament_index_python import get_resource
+
 import threading
 
 import rclpy
 
+from tf2_msgs.srv import FrameGraph
+import tf2_ros
+
+from python_qt_binding import loadUi
 from python_qt_binding.QtCore import pyqtSlot
 from python_qt_binding.QtCore import Qt
 from python_qt_binding.QtCore import Signal
@@ -50,17 +57,24 @@ from python_qt_binding.QtWidgets import QLabel
 from python_qt_binding.QtWidgets import QLineEdit, QComboBox
 from python_qt_binding.QtWidgets import QMainWindow
 from python_qt_binding.QtWidgets import QPushButton
-from python_qt_binding.QtWidgets import QSlider
+from python_qt_binding.QtWidgets import QSlider, QGraphicsScene
 from python_qt_binding.QtWidgets import QScrollArea
 from python_qt_binding.QtWidgets import QVBoxLayout
 from python_qt_binding.QtWidgets import QWidget, QFileDialog
-from python_qt_binding.QtGui import QPainter
+from python_qt_binding.QtGui import QPainter, QIcon, QImage
+
 from python_qt_binding.QtCore import QRect
 from python_qt_binding.QtCore import pyqtSignal
 from python_qt_binding.QtGui import QFontMetrics, QPixmap
 
+from qt_dotgraph.pydotfactory import PydotFactory
+from qt_dotgraph.dot_to_qt import DotToQtGenerator
+from rqt_graph.interactive_graphics_view import InteractiveGraphicsView 
 
-from urdf_configurator.urdf_configurator import UrdfConfigurator, assemblySetup
+
+from .urdf_configurator import UrdfConfigurator, assemblySetup
+from .dotcode_tf import RosTfTreeDotcodeGenerator
+
 
 RANGE = 10000
 LINE_EDIT_WIDTH = 45
@@ -241,12 +255,168 @@ class MyPopup(QWidget):
         self.close()
 
 
+
+class dotGraphwidget(QWidget):
+    def __init__(self, urdf, parent=None):
+        super(dotGraphwidget, self).__init__(parent)
+
+        self.last_drawargs = None
+
+        self.dotcode_factory = PydotFactory()
+        # self.dotcode_generator = RosTfTreeDotcodeGenerator()
+        self.urdf_data = urdf
+        self.dot_to_qt = DotToQtGenerator()
+        self._current_dotcode = None
+        # QWidget.__init__(self)
+        self._widget = QWidget()
+
+        self.dot_to_qt = DotToQtGenerator()
+
+        self.generate_dotcode()
+
+
+
+    def generate_dotcode(self,
+                         rank='same',   # None, same, min, max, source, sink
+                         ranksep=0.2,   # vertical distance between layers
+                         rankdir='TB',  # direction of layout (TB top > bottom, LR left > right)
+                         ):
+
+
+        drawing_args = {
+            'dotcode_factory': self.dotcode_factory,
+            'rank': rank,
+            'rankdir': rankdir,
+            'ranksep': ranksep}
+
+        selection_changed = False
+        if self.last_drawargs != drawing_args:
+            selection_changed = True
+            self.last_drawargs = drawing_args
+
+            self.dotcode_factory = self.dotcode_factory
+            self.rank = rank
+            self.rankdir = rankdir
+            self.ranksep = ranksep
+
+        # generate new dotcode
+   
+        self.graph = self.generate(self.urdf_data)
+        self.dotcode = self.dotcode_factory.create_dot(self.graph)
+
+        return self.dotcode
+
+    def generate(self, urdf_data):
+        graph = self.dotcode_factory.get_graph(rank=self.rank,
+                                        rankdir=self.rankdir,
+                                        ranksep=self.ranksep)
+
+        if urdf_data is not None or urdf_data.links is None:
+            self.dotcode_factory.add_node_to_graph(graph, 'No urdf recieved')
+            return graph
+
+        for link in urdf_data.links:
+            if not link.parent:
+                root = link.name
+            self.dotcode_factory.add_node_to_graph(graph,
+                                                   str(link.name),
+                                                   shape='ellipse')
+            # self.dotcode_factory.add_node_to_graph(
+            #     graph, frame_dict, shape='ellipse')
+
+            self.dotcode_factory.add_edge_to_graph(graph,
+                                                   str(tf_frame_values['parent']),
+                                                   frame_dict,
+                                                   )
+            
+            edge_label += 'Oldest transform: %s"' % str(tf_frame_values['oldest_transform'])
+            self.dotcode_factory.add_edge_to_graph(graph,
+                                                   str(tf_frame_values['parent']),
+                                                   frame_dict,
+                                                   label=edge_label)
+
+        # create legend before root node
+        # legend_label = '"Recorded at time: %s"' % str(timestamp)
+        # self.dotcode_factory.add_node_to_graph(graph, legend_label)
+        # self.dotcode_factory.add_edge_to_graph(graph,
+        #                                        legend_label,
+        #                                        root,
+        #                                        style='invis')
+
+        # dot += ' subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";\n'
+        # dot += '"Recorded at time: '+str(rospy.Time.now().to_sec())+'"[ shape=plaintext ] ;\n'
+        # dot += '}->"'+root+'"[style=invis];\n}'
+        return graph
+    
+    def get_qt_nodes_edges(self, highlight_level=1):
+        return self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
+                                                                highlight_level)
+
+
+
+
 class urdfConfiguratorGUI(QMainWindow):
-    def __init__(self, name, configurator):
+    def __init__(self, name, urdf_configurator):
         super(urdfConfiguratorGUI, self).__init__()
 
+        self.configurator = urdf_configurator
 
         self.setWindowTitle(name)
+
+        self.initialized = False
+
+        self.setObjectName('urdfConfigurator')
+
+
+        self._current_dotcode = None
+
+        self._widget = QWidget()
+        self._widget.setObjectName('urdfConfiguratorUi')
+
+
+
+        _, package_path = get_resource('packages', 'urdf_configurator')
+        ui_file = os.path.join(package_path, 'share', 'urdf_configurator', 'resource', 'RosURDFConfig.ui')
+        loadUi(ui_file, self._widget, {'InteractiveGraphicsView': InteractiveGraphicsView})
+        self.dotGraph = dotGraphwidget(self.configurator.get_robot())
+        self._scene = QGraphicsScene()
+        self._scene.setBackgroundBrush(Qt.white)
+        self._widget.graphics_view.setScene(self._scene)
+
+        self._redraw_graph_view()
+        # if context.serial_number() > 1:
+                # self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
+
+        self._widget.update_urdf_push_button.setIcon(QIcon.fromTheme('view-refresh'))
+        self._widget.update_urdf_push_button.pressed.connect(self.update)
+
+
+
+        self._widget.show()
+
+
+    def _redraw_graph_view(self):
+        self._scene.clear()
+
+        if self._widget.highlight_connections_check_box.isChecked():
+            highlight_level = 3
+        else:
+            highlight_level = 1
+
+        (nodes, edges) = self.dotGraph.get_qt_nodes_edges(highlight_level)
+
+        for node_item in nodes.values():
+            self._scene.addItem(node_item)
+        for edge_items in edges.values():
+            for edge_item in edge_items:
+                edge_item.add_to_scene(self._scene)
+
+        self._scene.setSceneRect(self._scene.itemsBoundingRect())
+        # if self._widget.auto_fit_graph_check_box.isChecked():
+        #     self._fit_in_view()
+
+
+    def oldWidget(self):
 
         # Button for updating the configuration
         self.update_button = QPushButton("Update", self)
@@ -278,9 +448,6 @@ class urdfConfiguratorGUI(QMainWindow):
         self.central_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.central_widget)
 
-        self.configurator = configurator
-
-
 
     def receive_assembly_inputs(self, inputs):
 
@@ -301,6 +468,19 @@ class urdfConfiguratorGUI(QMainWindow):
         self.configurator.update_robot()
 
     @pyqtSlot()
+
+    def setupDocWidget(self):
+        # factory builds generic dotcode items
+        self.dotcode_factory = PydotFactory()
+        # self.dotcode_factory = PygraphvizFactory()
+        # generator builds rosgraph
+        self.dotcode_generator = RosTfTreeDotcodeGenerator()
+        self.tf2_buffer_ = tf2_ros.Buffer(node=self._node)
+        self.tf2_listener_ = tf2_ros.TransformListener(self.tf2_buffer_, self._node)
+
+        # dot_to_qt transforms into Qt elements using dot layout
+        self.dot_to_qt = DotToQtGenerator()
+
     def update(self):
         self.configurator.update_robot()
         pass
