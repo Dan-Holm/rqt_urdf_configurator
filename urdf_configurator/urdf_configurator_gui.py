@@ -68,7 +68,7 @@ from python_qt_binding.QtCore import pyqtSignal
 from python_qt_binding.QtGui import QFontMetrics, QPixmap
 
 from qt_dotgraph.pydotfactory import PydotFactory
-from qt_dotgraph.dot_to_qt import DotToQtGenerator
+from qt_dotgraph.dot_to_qt import DotToQtGenerator, NodeItem
 from rqt_graph.interactive_graphics_view import InteractiveGraphicsView 
 
 
@@ -263,16 +263,13 @@ class dotGraphwidget(QWidget):
         self.last_drawargs = None
 
         self.dotcode_factory = PydotFactory()
-        # self.dotcode_generator = RosTfTreeDotcodeGenerator()
+        self.dotcode_generator = RosTfTreeDotcodeGenerator()
         self.urdf_data = urdf
-        self.dot_to_qt = DotToQtGenerator()
         self._current_dotcode = None
-        # QWidget.__init__(self)
+        QWidget.__init__(self)
         self._widget = QWidget()
 
-        self.dot_to_qt = DotToQtGenerator()
-
-        self.generate_dotcode()
+        # self.generate_dotcode()
 
 
 
@@ -303,69 +300,92 @@ class dotGraphwidget(QWidget):
    
         self.graph = self.generate(self.urdf_data)
         self.dotcode = self.dotcode_factory.create_dot(self.graph)
-
         return self.dotcode
 
     def generate(self, urdf_data):
+        # print("generating dotcode for: ", urdf_data.child_map)
+        # print(urdf_data.link_map)
+        # print(urdf_data.joint_map)
         graph = self.dotcode_factory.get_graph(rank=self.rank,
                                         rankdir=self.rankdir,
                                         ranksep=self.ranksep)
 
-        if urdf_data is not None or urdf_data.links is None:
+        if urdf_data is None or urdf_data.links is None:
             self.dotcode_factory.add_node_to_graph(graph, 'No urdf recieved')
+            print("No urdf recieved")
             return graph
 
-        for link in urdf_data.links:
-            if not link.parent:
-                root = link.name
-            self.dotcode_factory.add_node_to_graph(graph,
-                                                   str(link.name),
-                                                   shape='ellipse')
-            # self.dotcode_factory.add_node_to_graph(
-            #     graph, frame_dict, shape='ellipse')
+        root = urdf_data.links[0].name
+        for parent in urdf_data.child_map:
 
-            self.dotcode_factory.add_edge_to_graph(graph,
-                                                   str(tf_frame_values['parent']),
-                                                   frame_dict,
-                                                   )
-            
-            edge_label += 'Oldest transform: %s"' % str(tf_frame_values['oldest_transform'])
-            self.dotcode_factory.add_edge_to_graph(graph,
-                                                   str(tf_frame_values['parent']),
-                                                   frame_dict,
-                                                   label=edge_label)
+            self.dotcode_factory.add_node_to_graph(graph,
+                                                str(parent),
+                                                shape='ellipse')
+            for child in urdf_data.child_map[parent]:
+                # print("parent:", parent, "child:", child)
+
+                
+                self.dotcode_factory.add_edge_to_graph(graph,
+                                                       str(parent),
+                                                       str(child[1]),
+                                                       )
+
+
+                # self.dotcode_factory.add_node_to_graph(
+                #     graph, frame_dict, shape='ellipse')
+
+                # self.dotcode_factory.add_edge_to_graph(graph,
+                #                                     str(tf_frame_values['parent']),
+                #                                     frame_dict,
+                #                                     )
+                
+                # # self.dotcode_factory.add_edge_to_graph(graph,
+                # #                                     str(tf_frame_values['parent']),
+                # #                                     frame_dict,
+                # #                                     label=edge_label)
 
         # create legend before root node
-        # legend_label = '"Recorded at time: %s"' % str(timestamp)
-        # self.dotcode_factory.add_node_to_graph(graph, legend_label)
-        # self.dotcode_factory.add_edge_to_graph(graph,
-        #                                        legend_label,
-        #                                        root,
-        #                                        style='invis')
+        legend_label = "urdf file"
+        self.dotcode_factory.add_node_to_graph(graph, legend_label)
+        self.dotcode_factory.add_edge_to_graph(graph,
+                                               legend_label,
+                                               root,
+                                               style='invis')
 
         # dot += ' subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";\n'
         # dot += '"Recorded at time: '+str(rospy.Time.now().to_sec())+'"[ shape=plaintext ] ;\n'
         # dot += '}->"'+root+'"[style=invis];\n}'
         return graph
     
-    def get_qt_nodes_edges(self, highlight_level=1):
-        return self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
-                                                                highlight_level)
+class linkItem(NodeItem):
+    
+    def __init__(self, node_item):
+        self.node_item = node_item
+        
+
+
+    def mousePressEvent(self, event):
+        print("link clicked", event)
+
+    def __getattr__(self, name):
+        # Delegate attribute access to the original instance
+        return getattr(self.node_item, name)
 
 
 
 
-class urdfConfiguratorGUI(QMainWindow):
+
+class urdfConfiguratorGUI():
     def __init__(self, name, urdf_configurator):
         super(urdfConfiguratorGUI, self).__init__()
 
         self.configurator = urdf_configurator
 
-        self.setWindowTitle(name)
+        # self.setWindowTitle(name)
 
         self.initialized = False
 
-        self.setObjectName('urdfConfigurator')
+        # self.setObjectName('urdfConfigurator')
 
 
         self._current_dotcode = None
@@ -379,11 +399,15 @@ class urdfConfiguratorGUI(QMainWindow):
         ui_file = os.path.join(package_path, 'share', 'urdf_configurator', 'resource', 'RosURDFConfig.ui')
         loadUi(ui_file, self._widget, {'InteractiveGraphicsView': InteractiveGraphicsView})
         self.dotGraph = dotGraphwidget(self.configurator.get_robot())
+        self.dot_to_qt = DotToQtGenerator()
         self._scene = QGraphicsScene()
+        self._scene.setObjectName(name)
+
         self._scene.setBackgroundBrush(Qt.white)
         self._widget.graphics_view.setScene(self._scene)
 
-        self._redraw_graph_view()
+        # self._redraw_graph_view()
+        self._update_graph_view(self.dotGraph.generate_dotcode())
         # if context.serial_number() > 1:
                 # self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
@@ -394,26 +418,48 @@ class urdfConfiguratorGUI(QMainWindow):
 
         self._widget.show()
 
+    def _update_graph_view(self, dotcode):
+        if dotcode == self._current_dotcode:
+            return
+        self._current_dotcode = dotcode
+        self._redraw_graph_view()
+
 
     def _redraw_graph_view(self):
+        print("redraw graph view")
         self._scene.clear()
 
         if self._widget.highlight_connections_check_box.isChecked():
             highlight_level = 3
         else:
             highlight_level = 1
-
-        (nodes, edges) = self.dotGraph.get_qt_nodes_edges(highlight_level)
+        (nodes, edges) = self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
+                                                            highlight_level)
 
         for node_item in nodes.values():
-            self._scene.addItem(node_item)
+            link_item = linkItem(node_item)
+            self._scene.addItem(link_item)
+            #Make all node items to a button
+            # node_item.setFlag(node_item.ItemIsSelectable, True)
+            # connect keypresses to node_item
+            
+
         for edge_items in edges.values():
             for edge_item in edge_items:
                 edge_item.add_to_scene(self._scene)
 
-        self._scene.setSceneRect(self._scene.itemsBoundingRect())
+        print(self._scene.items)
+        # self._scene.setSceneRect(self._scene.itemsBoundingRect())
         # if self._widget.auto_fit_graph_check_box.isChecked():
-        #     self._fit_in_view()
+        self._fit_in_view()
+
+
+    def node_clicked(self, event):
+        print("node clicked ", event)
+
+    def _fit_in_view(self):
+        self._widget.graphics_view.fitInView(self._scene.itemsBoundingRect(),
+                                             Qt.KeepAspectRatio)
 
 
     def oldWidget(self):
@@ -483,7 +529,7 @@ class urdfConfiguratorGUI(QMainWindow):
 
     def update(self):
         self.configurator.update_robot()
-        pass
+        self._update_graph_view(self.dotGraph.generate_dotcode())
 
     def add_link(self):
         self.w = MyPopup()
@@ -536,7 +582,7 @@ def main():
     app = QApplication(sys.argv)
     configurator_gui = urdfConfiguratorGUI('URDF Configurator', UrdfConfigurator(parsed_args.urdf_file))
 
-    configurator_gui.show()
+    # configurator_gui.show()
 
     threading.Thread(target=configurator_gui.loop).start()
     signal.signal(signal.SIGINT, signal.SIG_DFL)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RosTfTreeWidget</class>
- <widget class="QWidget" name="RosTfTreeWidget">
+ <class>ROSURDFConfigurator</class>
+ <widget class="QWidget" name="RosUrdfConfigWidget">
   <property name="enabled">
    <bool>true</bool>
   </property>
@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>TF Tree</string>
+   <string>URDF configurator</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
    <item>
@@ -22,14 +22,14 @@
      <item>
       <widget class="QPushButton" name="new_urdf_file">
        <property name="toolTip">
-        <string>Clear TF Buffer</string>
+        <string>New URDF file</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="update_urdf_push_button">
        <property name="toolTip">
-        <string>Refresh TF Tree</string>
+        <string>Refresh URDF</string>
        </property>
       </widget>
      </item>
