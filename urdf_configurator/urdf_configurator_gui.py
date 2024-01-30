@@ -45,7 +45,7 @@ from tf2_msgs.srv import FrameGraph
 import tf2_ros
 
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import pyqtSlot
+from python_qt_binding.QtCore import pyqtSlot, QRectF
 from python_qt_binding.QtCore import Qt
 from python_qt_binding.QtCore import Signal
 from python_qt_binding.QtGui import QFont
@@ -76,8 +76,8 @@ from .urdf_configurator import UrdfConfigurator, assemblySetup
 from .dotcode_tf import RosTfTreeDotcodeGenerator
 
 
-RANGE = 10000
-LINE_EDIT_WIDTH = 45
+RANGE = 1000
+LINE_EDIT_WIDTH = 90
 SLIDER_WIDTH = 200
 INIT_NUM_SLIDERS = 7  # Initial number of sliders to show in window
 
@@ -93,7 +93,7 @@ MIN_WIDTH = SLIDER_WIDTH + DEFAULT_CHILD_MARGIN * 4 + DEFAULT_WINDOW_MARGIN * 2
 MIN_HEIGHT = DEFAULT_BTN_HEIGHT * 2 + DEFAULT_WINDOW_MARGIN * 2 + DEFAULT_CHILD_MARGIN * 2
 
 class Slider(QWidget):
-    def __init__(self, name):
+    def __init__(self, name, value=0, angular=False):
         super().__init__()
 
         self.joint_layout = QVBoxLayout()
@@ -115,9 +115,21 @@ class Slider(QWidget):
 
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setFont(font)
-        self.slider.setRange(0, RANGE)
-        self.slider.setValue(int(RANGE / 2))
+
+        if angular:
+            self.slider.setRange(-314, 314)
+            # self.slider.setTickInterval(0.01)
+            self.slider.setValue(int(value*100))
+            self.display.setText(str(value))
+        else:
+            self.slider.setRange(0, RANGE)
+            self.slider.setValue(int(value))
+            self.display.setText(str(value))
+
         self.slider.setFixedWidth(SLIDER_WIDTH)
+
+
+        self.slider.valueChanged.connect(self.update)
 
         self.joint_layout.addWidget(self.slider)
 
@@ -134,6 +146,11 @@ class Slider(QWidget):
         self.label.setParent(None)
 
         self.row_layout.setParent(None)
+
+    def update(self, value):
+        self.display.setText(str(value))
+        self.slider.setValue(0)
+
 
 
 class MyPopup(QWidget):
@@ -254,6 +271,23 @@ class MyPopup(QWidget):
         self.return_inputs_signal.emit(self.inputs)
         self.close()
 
+# Create widget class the can be inserted into the scroll area
+class ScrollWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+
+    def addWidget(self, widget):
+        self.layout.addWidget(widget)
+
+    def removeWidget(self, widget):
+        self.layout.removeWidget(widget)
+
+    def clearLayout(self):
+        for i in reversed(range(self.layout.count())): 
+            self.layout.itemAt(i).widget().deleteLater()
+
 
 
 class dotGraphwidget(QWidget):
@@ -356,22 +390,6 @@ class dotGraphwidget(QWidget):
         # dot += '"Recorded at time: '+str(rospy.Time.now().to_sec())+'"[ shape=plaintext ] ;\n'
         # dot += '}->"'+root+'"[style=invis];\n}'
         return graph
-    
-class linkItem(NodeItem):
-    
-    def __init__(self, node_item):
-        self.node_item = node_item
-        
-
-
-    def mousePressEvent(self, event):
-        print("link clicked", event)
-
-    def __getattr__(self, name):
-        # Delegate attribute access to the original instance
-        return getattr(self.node_item, name)
-
-
 
 
 
@@ -437,29 +455,82 @@ class urdfConfiguratorGUI():
                                                             highlight_level)
 
         for node_item in nodes.values():
-            link_item = linkItem(node_item)
-            self._scene.addItem(link_item)
-            #Make all node items to a button
-            # node_item.setFlag(node_item.ItemIsSelectable, True)
-            # connect keypresses to node_item
+            ## Add mousePressEvent to node_item,linking to the node, and not the scene
+            node_item.setFlag(node_item.ItemIsSelectable, True)
+            # node_item.mousePressEvent = lambda event, node=node_item: self.node_clicked(node) # This also works
+
+            node_item.mousePressEvent = self.create_mouse_press_callback(node_item) # uses a named function instead of a lambda to create the callback
+            self._scene.addItem(node_item)
             
 
         for edge_items in edges.values():
             for edge_item in edge_items:
                 edge_item.add_to_scene(self._scene)
 
-        print(self._scene.items)
         # self._scene.setSceneRect(self._scene.itemsBoundingRect())
         # if self._widget.auto_fit_graph_check_box.isChecked():
         self._fit_in_view()
 
 
+    def create_mouse_press_callback(self, node_item):
+        def mouse_press_event(event):
+            # parse the node_item to the callback, instead of scene event. 
+            self.node_clicked(node_item)
+        
+        return mouse_press_event
+
     def node_clicked(self, event):
-        print("node clicked ", event)
+        print("node clicked ", event._label.text())
+        self.generate_modification_widget(event._label.text())
+
 
     def _fit_in_view(self):
         self._widget.graphics_view.fitInView(self._scene.itemsBoundingRect(),
                                              Qt.KeepAspectRatio)
+
+
+    def generate_modification_widget(self, link_name):
+        # Add input fields for the pose of the node to modification_area
+         # Horisontal layout with 3 sliders for rpy values
+        link = self.configurator.get_link_from_name(link_name)
+
+
+        
+        self.modification_widget = QWidget()
+        self.modification_widget.setObjectName('modification_widget')
+        self.modification_widget.setLayout(QVBoxLayout())
+
+        # TODO: Add collision option
+            # length = Slider("Length", link.length)
+            # radius = Slider("Radius", link.geometry.radius)
+        
+        title = QLabel(link_name)
+        title.font = QFont("Helvetica", 9, QFont.Bold)
+        self.modification_widget.layout().addWidget(title)
+
+        roll = Slider("Roll", link.visual.origin.rpy[0], angular=True)
+        pitch = Slider("Pitch", link.visual.origin.rpy[1], angular=True)
+        yaw = Slider("Yaw", link.visual.origin.rpy[2], angular=True)
+        x = Slider("X")
+        y = Slider("Y")
+        z = Slider("Z")
+
+        self.modification_widget.layout().addWidget(roll)
+        self.modification_widget.layout().addWidget(pitch)
+        self.modification_widget.layout().addWidget(yaw)
+        self.modification_widget.layout().addWidget(x)
+        self.modification_widget.layout().addWidget(y)
+        self.modification_widget.layout().addWidget(z)
+
+
+        self._widget.modification_area.setWidget(self.modification_widget)
+
+        
+
+        self._widget.modification_area.show()        
+
+
+        
 
 
     def oldWidget(self):

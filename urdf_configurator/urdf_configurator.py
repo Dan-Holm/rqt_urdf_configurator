@@ -92,6 +92,9 @@ class UrdfConfigurator(rclpy.node.Node):
     def add_link(self, link):
         self.urdf.add_link(link)
 
+    def get_link_from_name(self, name):
+        return [link for link in self.links if link.name == name][0]
+    
 
     def get_link_names(self):
         return [link.name for link in self.links]
