@@ -76,7 +76,7 @@ from .urdf_configurator import UrdfConfigurator, assemblySetup
 from .dotcode_tf import RosTfTreeDotcodeGenerator
 
 
-RANGE = 1000
+RANGE = 20000
 LINE_EDIT_WIDTH = 90
 SLIDER_WIDTH = 200
 INIT_NUM_SLIDERS = 7  # Initial number of sliders to show in window
@@ -93,6 +93,8 @@ MIN_WIDTH = SLIDER_WIDTH + DEFAULT_CHILD_MARGIN * 4 + DEFAULT_WINDOW_MARGIN * 2
 MIN_HEIGHT = DEFAULT_BTN_HEIGHT * 2 + DEFAULT_WINDOW_MARGIN * 2 + DEFAULT_CHILD_MARGIN * 2
 
 class Slider(QWidget):
+    sliderUpdateTrigger = pyqtSignal(int)
+
     def __init__(self, name, value=0, angular=False):
         super().__init__()
 
@@ -115,14 +117,16 @@ class Slider(QWidget):
 
         self.slider = QSlider(Qt.Horizontal)
         self.slider.setFont(font)
+        self.angular = angular
 
-        if angular:
+        if self.angular:
             self.slider.setRange(-314, 314)
             # self.slider.setTickInterval(0.01)
             self.slider.setValue(int(value*100))
             self.display.setText(str(value))
         else:
-            self.slider.setRange(0, RANGE)
+            self.slider.setRange(-RANGE, RANGE)
+            # self.slider.setTickInterval(0.1)
             self.slider.setValue(int(value))
             self.display.setText(str(value))
 
@@ -147,9 +151,16 @@ class Slider(QWidget):
 
         self.row_layout.setParent(None)
 
-    def update(self, value):
-        self.display.setText(str(value))
-        self.slider.setValue(0)
+    # def sliderUpdateConnection(self, callback):
+    #     self.sliderUpdateTrigger.connect(callback)
+    #     self.sliderUpdateTrigger.emit()
+
+    def update(self):
+        value = self.slider.value()
+        print("Slider Value changed, updating to, ", value)
+        self.display.setText(str(value/100))
+        self.slider.setValue(value)
+        self.sliderUpdateTrigger.emit(value)
 
 
 
@@ -393,7 +404,7 @@ class dotGraphwidget(QWidget):
 
 
 
-class urdfConfiguratorGUI():
+class urdfConfiguratorGUI(QMainWindow):
     def __init__(self, name, urdf_configurator):
         super(urdfConfiguratorGUI, self).__init__()
 
@@ -507,22 +518,21 @@ class urdfConfiguratorGUI():
         title = QLabel(link_name)
         title.font = QFont("Helvetica", 9, QFont.Bold)
         self.modification_widget.layout().addWidget(title)
-
+        sliders = {}
         roll = Slider("Roll", link.visual.origin.rpy[0], angular=True)
+        sliders["roll"] = roll
         pitch = Slider("Pitch", link.visual.origin.rpy[1], angular=True)
+        sliders["pitch"] = pitch
         yaw = Slider("Yaw", link.visual.origin.rpy[2], angular=True)
+        sliders["yaw"] = yaw
         x = Slider("X")
+        sliders["x"] = x
         y = Slider("Y")
+        sliders["y"] = y
         z = Slider("Z")
+        sliders["z"] = z
 
-        self.modification_widget.layout().addWidget(roll)
-        self.modification_widget.layout().addWidget(pitch)
-        self.modification_widget.layout().addWidget(yaw)
-        self.modification_widget.layout().addWidget(x)
-        self.modification_widget.layout().addWidget(y)
-        self.modification_widget.layout().addWidget(z)
-
-
+        self.connectSliders(sliders)
         self._widget.modification_area.setWidget(self.modification_widget)
 
         
@@ -530,7 +540,13 @@ class urdfConfiguratorGUI():
         self._widget.modification_area.show()        
 
 
-        
+    def connectSliders(self, sliders):
+      for slider_key, slider in sliders.items():
+            self.modification_widget.layout().addWidget(slider)
+            slider.sliderUpdateTrigger.connect(self.sliderUpdate)
+            # slider.sliderUpdateTrigger.emit(slider)
+
+
 
 
     def oldWidget(self):
@@ -585,6 +601,14 @@ class urdfConfiguratorGUI():
         self.configurator.update_robot()
 
     @pyqtSlot()
+    def sliderUpdate(self):
+        slider = self.sender()  # Get the sender of the signal
+        print("slider update, ", slider.display.text(), slider.slider.value())
+
+    @pyqtSlot()
+
+
+
 
     def setupDocWidget(self):
         # factory builds generic dotcode items

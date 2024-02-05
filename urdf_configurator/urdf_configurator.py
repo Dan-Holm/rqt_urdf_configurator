@@ -67,7 +67,6 @@ class UrdfConfigurator(rclpy.node.Node):
 
         self.static_tf_broadcaster = tf2_ros.StaticTransformBroadcaster(self)
         # self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
-
         self.publishURDF()
         self.publish_static_transforms(self.urdf.child_map)
 
