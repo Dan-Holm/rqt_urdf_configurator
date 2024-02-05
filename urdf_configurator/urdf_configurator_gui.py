@@ -76,7 +76,7 @@ from .urdf_configurator import UrdfConfigurator, assemblySetup
 from .dotcode_tf import RosTfTreeDotcodeGenerator
 
 
-RANGE = 20000
+RANGE = 200
 LINE_EDIT_WIDTH = 90
 SLIDER_WIDTH = 200
 INIT_NUM_SLIDERS = 7  # Initial number of sliders to show in window
@@ -101,6 +101,7 @@ class Slider(QWidget):
         self.joint_layout = QVBoxLayout()
         self.row_layout = QHBoxLayout()
 
+        self.link_value = value
         font = QFont("Helvetica", 9, QFont.Bold)
         self.label = QLabel(name)
         self.label.setFont(font)
@@ -160,6 +161,7 @@ class Slider(QWidget):
         print("Slider Value changed, updating to, ", value)
         self.display.setText(str(value/100))
         self.slider.setValue(value)
+        self.link_value = value / 100
         self.sliderUpdateTrigger.emit(value)
 
 
@@ -503,7 +505,7 @@ class urdfConfiguratorGUI(QMainWindow):
     def generate_modification_widget(self, link_name):
         # Add input fields for the pose of the node to modification_area
          # Horisontal layout with 3 sliders for rpy values
-        link = self.configurator.get_link_from_name(link_name)
+        self.active_link = self.configurator.get_link_from_name(link_name)
 
 
         
@@ -519,17 +521,17 @@ class urdfConfiguratorGUI(QMainWindow):
         title.font = QFont("Helvetica", 9, QFont.Bold)
         self.modification_widget.layout().addWidget(title)
         sliders = {}
-        roll = Slider("Roll", link.visual.origin.rpy[0], angular=True)
+        roll = Slider("Roll", self.active_link.visual.origin.rpy[0], angular=True)
         sliders["roll"] = roll
-        pitch = Slider("Pitch", link.visual.origin.rpy[1], angular=True)
+        pitch = Slider("Pitch", self.active_link.visual.origin.rpy[1], angular=True)
         sliders["pitch"] = pitch
-        yaw = Slider("Yaw", link.visual.origin.rpy[2], angular=True)
+        yaw = Slider("Yaw", self.active_link.visual.origin.rpy[2], angular=True)
         sliders["yaw"] = yaw
-        x = Slider("X")
+        x = Slider("X", self.active_link.visual.origin.xyz[0], angular=False)
         sliders["x"] = x
-        y = Slider("Y")
+        y = Slider("Y", self.active_link.visual.origin.xyz[1], angular=False)
         sliders["y"] = y
-        z = Slider("Z")
+        z = Slider("Z", self.active_link.visual.origin.xyz[2], angular=False)
         sliders["z"] = z
 
         self.connectSliders(sliders)
@@ -603,7 +605,14 @@ class urdfConfiguratorGUI(QMainWindow):
     @pyqtSlot()
     def sliderUpdate(self):
         slider = self.sender()  # Get the sender of the signal
-        print("slider update, ", slider.display.text(), slider.slider.value())
+        if slider.angular:
+            axis = ["Roll", "Pitch", "Yaw"].index(slider.label.text())
+            print( "axis no for ", slider.label.text(), axis)
+            self.active_link.visual.origin.rpy[axis] = slider.link_value
+        else:
+            axis = ["X", "Y", "Z"].index(slider.label.text())
+            self.active_link.visual.origin.xyz[axis] = slider.link_value
+        self.configurator.update_robot()
 
     @pyqtSlot()
 
