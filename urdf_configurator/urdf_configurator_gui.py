@@ -110,8 +110,12 @@ class Slider(QWidget):
         self.display = QLineEdit("0.00")
         self.display.setAlignment(Qt.AlignRight)
         self.display.setFont(font)
-        self.display.setReadOnly(True)
         self.display.setFixedWidth(LINE_EDIT_WIDTH)
+        self.display.editingFinished.connect(self.display_edited)
+        # Connect self.display to function that updates the value
+        
+
+
         self.row_layout.addWidget(self.display)
 
         self.joint_layout.addLayout(self.row_layout)
@@ -140,6 +144,12 @@ class Slider(QWidget):
 
         self.setLayout(self.joint_layout)
 
+    def display_edited(self):
+        self.slider.setValue(int(float(self.display.text())*100))
+        # will trigger the update function
+
+
+
     def remove(self):
         self.joint_layout.removeWidget(self.slider)
         self.slider.setParent(None)
@@ -160,7 +170,7 @@ class Slider(QWidget):
         value = self.slider.value()
         print("Slider Value changed, updating to, ", value)
         self.display.setText(str(value/100))
-        self.slider.setValue(value)
+        # self.slider.setValue(value)
         self.link_value = value / 100
         self.sliderUpdateTrigger.emit(value)
 
