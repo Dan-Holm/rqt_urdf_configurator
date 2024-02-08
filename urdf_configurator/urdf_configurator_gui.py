@@ -170,7 +170,6 @@ class Slider(QWidget):
         value = self.slider.value()
         print("Slider Value changed, updating to, ", value)
         self.display.setText(str(value/100))
-        # self.slider.setValue(value)
         self.link_value = value / 100
         self.sliderUpdateTrigger.emit(value)
 
@@ -452,8 +451,13 @@ class urdfConfiguratorGUI(QMainWindow):
         # if context.serial_number() > 1:
                 # self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
+        self._widget.new_urdf_file.pressed.connect(self.newURDF)
+
         self._widget.update_urdf_push_button.setIcon(QIcon.fromTheme('view-refresh'))
         self._widget.update_urdf_push_button.pressed.connect(self.update)
+
+        self._widget.load_urdf_push_button.setIcon(QIcon.fromTheme('document-open'))
+        self._widget.load_urdf_push_button.pressed.connect(self.loadURDF)
 
 
 
@@ -675,6 +679,18 @@ class urdfConfiguratorGUI(QMainWindow):
     def loop(self):
         while True:
             rclpy.spin_once(self.configurator, timeout_sec=0.1)
+
+    def newURDF(self):
+        self.configurator = UrdfConfigurator(None)
+        self._update_graph_view(self.dotGraph.generate_dotcode())
+
+    def loadURDF(self):
+        # Get current working directory
+        cwd = os.getcwd()
+        # Open file browser
+        fname = QFileDialog.getOpenFileName(self, 'Open file', cwd ,"URDF files (*.urdf)")
+        urdf_file = fname[0]
+        self.configurator = UrdfConfigurator(urdf_file)
 
 
 

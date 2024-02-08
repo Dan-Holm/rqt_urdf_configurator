@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ROSURDFConfigurator</class>
- <widget class="QWidget" name="RosUrdfConfigWidget">
+ <class>RosTfTreeWidget</class>
+ <widget class="QWidget" name="RosTfTreeWidget">
   <property name="enabled">
    <bool>true</bool>
   </property>
@@ -14,22 +14,29 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>URDF configurator</string>
+   <string>TF Tree</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0">
      <item>
       <widget class="QPushButton" name="new_urdf_file">
        <property name="toolTip">
-        <string>New URDF file</string>
+        <string>Clear TF Buffer</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="load_urdf_push_button">
+       <property name="toolTip">
+        <string>Load DOT graph from file</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="update_urdf_push_button">
        <property name="toolTip">
-        <string>Refresh URDF</string>
+        <string>Refresh TF Tree</string>
        </property>
       </widget>
      </item>
@@ -43,6 +50,13 @@
        </property>
        <property name="checked">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="showJoints">
+       <property name="text">
+        <string>showJoints</string>
        </property>
       </widget>
      </item>
@@ -65,13 +79,6 @@
         </size>
        </property>
       </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="load_urdf_push_button">
-       <property name="toolTip">
-        <string>Load DOT graph from file</string>
-       </property>
-      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="save_dot_push_button">
@@ -127,6 +134,79 @@
           <height>247</height>
          </rect>
         </property>
+        <widget class="QWidget" name="gridLayoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>0</y>
+           <width>371</width>
+           <height>251</height>
+          </rect>
+         </property>
+         <layout class="QGridLayout" name="linkMenu">
+          <property name="leftMargin">
+           <number>10</number>
+          </property>
+          <property name="rightMargin">
+           <number>10</number>
+          </property>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="modifyVizuals">
+            <property name="text">
+             <string>Visuals</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="Link_name">
+            <property name="maximumSize">
+             <size>
+              <width>2000</width>
+              <height>70</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Link name</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="modifyInteria">
+            <property name="text">
+             <string>Interia</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QPushButton" name="modifyCollision">
+            <property name="text">
+             <string>Collision</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QPushButton" name="removeChild">
+            <property name="text">
+             <string>Remove Child</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="addChild">
+            <property name="text">
+             <string>Add Child</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QPushButton" name="joint">
+            <property name="text">
+             <string>Joint</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </widget>
      </item>

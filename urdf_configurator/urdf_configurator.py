@@ -53,17 +53,21 @@ class assemblySetup():
         joint.origin = pose
 class UrdfConfigurator(rclpy.node.Node):
 
-    def __init__(self, description_file):
+    def __init__(self, description_file=None, description_topic=None):
         super().__init__('urdf_configurator_node') #,  automatically_declare_parameters_from_overrides=True)
         print(description_file)
         if description_file is not None:
             # If we were given a URDF file on the command-line, use that.
             self.urdf = urdf.URDF.from_xml_file(description_file)
             self.configure_robot(self.urdf)
+        elif description_topic is not None:
+            # If we were given a topic to listen to, use that.
+            self.description_topic = description_topic
+            # self.description_subscriber = self.create_subscription(String, self.description_topic, self.description_callback, 10)
         else:
-            self.get_logger().info(
-                'Waiting for robot_description to be published on the robot_description topic...')
-
+            # Creating new empty URDF from scratch
+            self.urdf = urdf.URDF()
+            
 
         self.static_tf_broadcaster = tf2_ros.StaticTransformBroadcaster(self)
         # self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
