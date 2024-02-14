@@ -386,20 +386,6 @@ class dotGraphwidget(QWidget):
                                                        str(child[1]),
                                                        )
 
-
-                # self.dotcode_factory.add_node_to_graph(
-                #     graph, frame_dict, shape='ellipse')
-
-                # self.dotcode_factory.add_edge_to_graph(graph,
-                #                                     str(tf_frame_values['parent']),
-                #                                     frame_dict,
-                #                                     )
-                
-                # # self.dotcode_factory.add_edge_to_graph(graph,
-                # #                                     str(tf_frame_values['parent']),
-                # #                                     frame_dict,
-                # #                                     label=edge_label)
-
         # create legend before root node
         legend_label = "urdf file"
         self.dotcode_factory.add_node_to_graph(graph, legend_label)
@@ -408,9 +394,6 @@ class dotGraphwidget(QWidget):
                                                root,
                                                style='invis')
 
-        # dot += ' subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";\n'
-        # dot += '"Recorded at time: '+str(rospy.Time.now().to_sec())+'"[ shape=plaintext ] ;\n'
-        # dot += '}->"'+root+'"[style=invis];\n}'
         return graph
 
 
@@ -421,19 +404,12 @@ class urdfConfiguratorGUI(QMainWindow):
 
         self.configurator = urdf_configurator
 
-        # self.setWindowTitle(name)
-
         self.initialized = False
-
-        # self.setObjectName('urdfConfigurator')
-
 
         self._current_dotcode = None
 
         self._widget = QWidget()
         self._widget.setObjectName('urdfConfiguratorUi')
-
-
 
         _, package_path = get_resource('packages', 'urdf_configurator')
         ui_file = os.path.join(package_path, 'share', 'urdf_configurator', 'resource', 'RosURDFConfig.ui')
@@ -447,21 +423,39 @@ class urdfConfiguratorGUI(QMainWindow):
         self._widget.graphics_view.setScene(self._scene)
 
         # self._redraw_graph_view()
-        self._update_graph_view(self.dotGraph.generate_dotcode())
+        self._widget.graphics_view.fitInView(self._scene.itemsBoundingRect(), Qt.KeepAspectRatio)
+
+        if self.dotGraph.urdf_data.name:
+            self._update_graph_view(self.dotGraph.generate_dotcode())
         # if context.serial_number() > 1:
                 # self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
+        self._widget.new_urdf_file.setIcon(QIcon.fromTheme('document-new'))
         self._widget.new_urdf_file.pressed.connect(self.newURDF)
 
         self._widget.update_urdf_push_button.setIcon(QIcon.fromTheme('view-refresh'))
         self._widget.update_urdf_push_button.pressed.connect(self.update)
 
+        self._widget.fit_in_view_push_button.setIcon(QIcon.fromTheme('zoom-original'))
+        self._widget.fit_in_view_push_button.pressed.connect(self._fit_in_view)
+
         self._widget.load_urdf_push_button.setIcon(QIcon.fromTheme('document-open'))
         self._widget.load_urdf_push_button.pressed.connect(self.loadURDF)
 
+        self._widget.save_urdf_push_button.setIcon(QIcon.fromTheme('document-save'))
+        self._widget.save_urdf_push_button.pressed.connect(self.save_config)
 
+        self._widget.linkName.setText("Press link in graph to access")
+
+        self.modifcation_menu = self._widget.modification_widget
+
+        self._initialize_link_menu_buttons()
 
         self._widget.show()
+
+    def _initialize_link_menu_buttons(self):
+        self._widget.modifyVizuals.pressed.connect(self.generate_visuals_editer)
+
 
     def _update_graph_view(self, dotcode):
         if dotcode == self._current_dotcode:
@@ -494,11 +488,6 @@ class urdfConfiguratorGUI(QMainWindow):
             for edge_item in edge_items:
                 edge_item.add_to_scene(self._scene)
 
-        # self._scene.setSceneRect(self._scene.itemsBoundingRect())
-        # if self._widget.auto_fit_graph_check_box.isChecked():
-        self._fit_in_view()
-
-
     def create_mouse_press_callback(self, node_item):
         def mouse_press_event(event):
             # parse the node_item to the callback, instead of scene event. 
@@ -508,30 +497,39 @@ class urdfConfiguratorGUI(QMainWindow):
 
     def node_clicked(self, event):
         print("node clicked ", event._label.text())
-        self.generate_modification_widget(event._label.text())
+        self.active_link = self.configurator.get_link_from_name(event._label.text())
+        self.link_menu(self.active_link)
+
+        # self.generate_modification_widget()
 
 
     def _fit_in_view(self):
         self._widget.graphics_view.fitInView(self._scene.itemsBoundingRect(),
                                              Qt.KeepAspectRatio)
 
+    def link_menu(self, clicked_link):
+        # Remove current widget from modification area
+        print("Current modification area widget", self._widget.modification_area.widget().objectName())
+        self._widget.modification_area.takeWidget()
+        print("next modification area widget", self._widget.modification_area.widget())
 
-    def generate_modification_widget(self, link_name):
+        self._widget.modification_area.setWidget(self.modifcation_menu)
+        self._widget.linkName.setText(clicked_link.name)
+        
+
+    def generate_visuals_editer(self):
         # Add input fields for the pose of the node to modification_area
          # Horisontal layout with 3 sliders for rpy values
-        self.active_link = self.configurator.get_link_from_name(link_name)
-
-
         
         self.modification_widget = QWidget()
-        self.modification_widget.setObjectName('modification_widget')
+        self.modification_widget.setObjectName('visuals editor')
         self.modification_widget.setLayout(QVBoxLayout())
 
         # TODO: Add collision option
             # length = Slider("Length", link.length)
             # radius = Slider("Radius", link.geometry.radius)
         
-        title = QLabel(link_name)
+        title = QLabel(self.active_link.name)
         title.font = QFont("Helvetica", 9, QFont.Bold)
         self.modification_widget.layout().addWidget(title)
         sliders = {}
@@ -551,7 +549,6 @@ class urdfConfiguratorGUI(QMainWindow):
         self.connectSliders(sliders)
         self._widget.modification_area.setWidget(self.modification_widget)
 
-        
 
         self._widget.modification_area.show()        
 
@@ -681,7 +678,8 @@ class urdfConfiguratorGUI(QMainWindow):
             rclpy.spin_once(self.configurator, timeout_sec=0.1)
 
     def newURDF(self):
-        self.configurator = UrdfConfigurator(None)
+        #TODO: Check if current urdf has changed and ask if should be saved.
+        self.configurator.new_urdf()
         self._update_graph_view(self.dotGraph.generate_dotcode())
 
     def loadURDF(self):
@@ -690,7 +688,9 @@ class urdfConfiguratorGUI(QMainWindow):
         # Open file browser
         fname = QFileDialog.getOpenFileName(self, 'Open file', cwd ,"URDF files (*.urdf)")
         urdf_file = fname[0]
-        self.configurator = UrdfConfigurator(urdf_file)
+        self.configurator.load_urdf(urdf_file)
+        self.dotGraph = dotGraphwidget(self.configurator.get_robot())
+        self._update_graph_view(self.dotGraph.generate_dotcode())
 
 
 
@@ -710,8 +710,12 @@ def main():
     parsed_args = parser.parse_args(args=stripped_args[1:])
 
     app = QApplication(sys.argv)
-    configurator_gui = urdfConfiguratorGUI('URDF Configurator', UrdfConfigurator(parsed_args.urdf_file))
-
+    # Check if model file is given as argument
+    if parsed_args.urdf_file:
+        configurator_gui = urdfConfiguratorGUI('URDF Configurator', UrdfConfigurator(parsed_args.urdf_file))
+    else:
+        configurator_gui = urdfConfiguratorGUI('URDF Configurator', UrdfConfigurator())
+        
     # configurator_gui.show()
 
     threading.Thread(target=configurator_gui.loop).start()

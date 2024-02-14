@@ -55,27 +55,32 @@ class UrdfConfigurator(rclpy.node.Node):
 
     def __init__(self, description_file=None, description_topic=None):
         super().__init__('urdf_configurator_node') #,  automatically_declare_parameters_from_overrides=True)
-        print(description_file)
         if description_file is not None:
             # If we were given a URDF file on the command-line, use that.
-            self.urdf = urdf.URDF.from_xml_file(description_file)
-            self.configure_robot(self.urdf)
+            self.load_urdf(description_file)
+
         elif description_topic is not None:
             # If we were given a topic to listen to, use that.
             self.description_topic = description_topic
             # self.description_subscriber = self.create_subscription(String, self.description_topic, self.description_callback, 10)
         else:
             # Creating new empty URDF from scratch
-            self.urdf = urdf.URDF()
+            self.new_urdf()
             
 
         self.static_tf_broadcaster = tf2_ros.StaticTransformBroadcaster(self)
         # self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
+   
+
+    def new_urdf(self):
+        self.urdf = urdf.URDF()
+        return self.urdf
+
+    def load_urdf(self, description_file):
+        self.urdf = urdf.URDF.from_xml_file(description_file)
+        self.configure_robot(self.urdf)
         self.publishURDF()
-        self.publish_static_transforms(self.urdf.child_map)
-
-
-
+        # self.publish_static_transforms(self.urdf.child_map)
 
     def configure_robot(self, description):
         self.links = description.links
